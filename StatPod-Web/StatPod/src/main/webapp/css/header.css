@@ -1,10 +1,11 @@
 .navbar {
-    background-color: rgb(16,21,30);
-    padding: 15px;
+    background-color: rgb(16, 21, 30);
+    padding: 15px 20px; /* Add horizontal padding for consistency */
     display: flex;
     justify-content: space-between;
     align-items: center;
     color: white;
+    flex-wrap: wrap; /* Optional: improves mobile responsiveness */
 }
 
 .logo-link {
@@ -29,31 +30,93 @@
     width: auto;
 }
 
-.logo-text {
-    margin: 0;
-    font-size: 1.5rem;
-    color: white;
+/* Main navigation styling */
+nav {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
 }
 
-.navbar nav a {
+nav a {
     color: white;
     text-decoration: none;
-    margin: 0 15px;
+    font-weight: 500;
     transition: color 0.3s ease;
+    padding: 5px 0;
 }
 
-.navbar nav a:hover {
-    color: #ddd;
+nav a:hover {
+    color: #4a90e2;
 }
 
+/* Login button specific styling */
 .login-btn {
-    background-color: #007BFF;
-    padding: 8px 15px;
-    border-radius: 5px;
-    color: white;
-    transition: background-color 0.3s ease;
+    background-color: #4a90e2;
+    color: white !important;
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background-color 0.3s;
+    margin-left: 10px;
+    white-space: nowrap; /* Prevent line break */
 }
 
 .login-btn:hover {
-    background-color: #0069d9;
+    background-color: #3570b8;
+}
+
+/* User profile section */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-left: 15px;
+    flex-wrap: wrap;
+}
+
+.profile-pic-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 2px solid #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.profile-pic-btn:hover {
+    background-color: #ccc;
+    transform: scale(1.1);
+}
+
+.profile-pic-btn i {
+    font-size: 18px;
+    color: #555;
+}
+
+.user-name {
+    font-weight: 500;
+    color: white;
+    margin-right: 5px;
+    white-space: nowrap;
+}
+
+.logout-link {
+    color: white;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.logout-link:hover {
+    color: #4a90e2;
+    background-color: rgba(255, 255, 255, 0.1);
 }

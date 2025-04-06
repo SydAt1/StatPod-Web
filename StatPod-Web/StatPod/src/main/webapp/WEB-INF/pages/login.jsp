@@ -1,28 +1,34 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ include file="header.jsp" %>
+
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Login</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/login.css">
+    <link rel="stylesheet" type="text/css" href="css/login.css">
 </head>
 <body>
-    <%@ include file="/WEB-INF/pages/header.jsp" %>
 
-    <main>
-        <div class="login-header">
+<div class="page-wrapper">
+    
+    <main class="main-content">
+        <div class="login-box">
             <h2>Login</h2>
+            <form action="LoginServlet" method="post">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <input type="submit" value="Login">
+            </form>
+            <p class="signup-link">
+                Don't have an account? <a href="register.jsp">Sign up</a>
+            </p>
         </div>
-        <form action="${pageContext.request.contextPath}/login" method="post">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Login</button>
-            <% if (request.getAttribute("error") != null) { %>
-                <p class="error"><%= request.getAttribute("error") %></p>
-            <% } %>
-        </form>
-        <p class="signup-text">Don't have an account? <a href="${pageContext.request.contextPath}/register">Sign up</a></p>
     </main>
+    
+    <%@ include file="footer.jsp" %>
 
-    <%@ include file="/WEB-INF/pages/footer.jsp" %>
+</div>
+
 </body>
 </html>

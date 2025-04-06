@@ -51,18 +51,20 @@ public class RegisterController extends HttpServlet {
             }
 
             PodcastUserModel userModel = extractUserModel(req);
-            Boolean isAdded = registerService.addUser(userModel);
-
-            if (isAdded == null) {
-                handleError(req, resp, "Our server is under maintenance. Please try again later!");
-            } else if (isAdded) {
-                if (uploadImage(req)) {
+            
+            // First upload the image, then add user if successful
+            if (uploadImage(req)) {
+                Boolean isAdded = registerService.addUser(userModel);
+                
+                if (isAdded == null) {
+                    handleError(req, resp, "Our server is under maintenance. Please try again later!");
+                } else if (isAdded) {
                     handleSuccess(req, resp, "Your account is successfully created!", "/WEB-INF/pages/login.jsp");
                 } else {
-                    handleError(req, resp, "Could not upload the image. Please try again later!");
+                    handleError(req, resp, "Could not register your account. Please try again later!");
                 }
             } else {
-                handleError(req, resp, "Could not register your account. Please try again later!");
+                handleError(req, resp, "Could not upload the image. Please try again later!");
             }
         } catch (Exception e) {
             handleError(req, resp, "An unexpected error occurred. Please try again later!");

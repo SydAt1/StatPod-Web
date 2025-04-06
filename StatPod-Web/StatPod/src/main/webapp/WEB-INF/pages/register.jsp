@@ -93,7 +93,7 @@
         </div>
         <div class="form-group">
             <label for="imageUrl">Upload Profile Picture:</label>
-            <input type="file" name="imageUrl" id="imageUrl" accept="image/*" required>
+            <input type="file" name="imageUrl" id="imageUrl" accept="image/*">
         </div>
 
         <div class="button-group">

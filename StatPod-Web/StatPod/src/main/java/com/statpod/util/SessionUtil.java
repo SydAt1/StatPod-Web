@@ -60,4 +60,27 @@ public class SessionUtil {
             session.invalidate();
         }
     }
+    
+    /**
+     * Checks if a user is logged in
+     */
+    public static boolean isLoggedIn(HttpServletRequest request) {
+        Boolean isLoggedIn = (Boolean) getAttribute(request, "isLoggedIn");
+        return isLoggedIn != null && isLoggedIn;
+    }
+
+    /**
+     * Gets the logged-in username
+     */
+    public static String getCurrentUser(HttpServletRequest request) {
+        return (String) getAttribute(request, "username");
+    }
+
+    /**
+     * Sets session timeout in seconds
+     */
+    public static void setSessionTimeout(HttpServletRequest request, int seconds) {
+        HttpSession session = request.getSession();
+        session.setMaxInactiveInterval(seconds);
+    }
 }

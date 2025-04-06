@@ -23,7 +23,7 @@ public class LoginService {
      *         connection error occurs
      */
     public Boolean loginUser(PodcastUserModel podcastUserModel) {
-        String query = "SELECT username, password FROM podcast_user WHERE username = ?";
+        String query = "SELECT username, password FROM users WHERE username = ?";
 
         try (Connection dbConn = DbConfig.getDbConnection();
              PreparedStatement stmt = dbConn.prepareStatement(query)) {

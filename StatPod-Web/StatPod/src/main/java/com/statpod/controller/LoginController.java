@@ -31,6 +31,7 @@ public class LoginController extends HttpServlet {
 
     /**
      * Handles GET requests to the login page.
+     * Checks if user is already logged in using SessionUtil and redirects if necessary.
      *
      * @param request  HttpServletRequest object
      * @param response HttpServletResponse object
@@ -40,6 +41,21 @@ public class LoginController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // Check if user is already logged in
+        if (SessionUtil.isLoggedIn(request)) {
+            // Get current username
+            String username = SessionUtil.getCurrentUser(request);
+            
+            // Redirect based on user role
+            if ("admin".equals(username)) {
+                response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/discover");
+            }
+            return;
+        }
+        
+        // If not logged in, show login page
         request.getRequestDispatcher("/WEB-INF/pages/login.jsp").forward(request, response);
     }
 
@@ -54,6 +70,19 @@ public class LoginController extends HttpServlet {
      */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // Check if user is already logged in
+        if (SessionUtil.isLoggedIn(req)) {
+            String username = SessionUtil.getCurrentUser(req);
+            
+            // Redirect based on user role
+            if ("admin".equals(username)) {
+                resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
+            } else {
+                resp.sendRedirect(req.getContextPath() + "/discover");
+            }
+            return;
+        }
+        
         String username = req.getParameter("username");
         String password = req.getParameter("password");
         
@@ -90,7 +119,13 @@ public class LoginController extends HttpServlet {
         Boolean loginStatus = loginService.loginUser(podcastUser);
         
         if (loginStatus != null && loginStatus) {
+            // Set session attributes for logged-in user
             SessionUtil.setAttribute(req, "username", username);
+            SessionUtil.setAttribute(req, "isLoggedIn", true);
+            
+            // Set session timeout to 30 minutes (1800 seconds)
+            SessionUtil.setSessionTimeout(req, 1800);
+            
             if (username.equals("admin")) {
                 CookieUtil.addCookie(resp, "role", "admin", 5 * 30);
                 resp.sendRedirect(req.getContextPath() + "/admin/dashboard"); // Redirect to admin dashboard
