@@ -12,55 +12,55 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-/**
- * LoginController is responsible for handling login requests for podcast users.
- * It interacts with the LoginService to authenticate users and validates input 
- * using ValidationUtil.
- */
 @WebServlet(asyncSupported = true, urlPatterns = { "/login" })
 public class LoginController extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private final LoginService loginService;
 
-    /**
-     * Constructor initializes the LoginService.
-     */
     public LoginController() {
         this.loginService = new LoginService();
     }
 
-    /**
-     * Handles GET requests to the login page.
-     *
-     * @param request  HttpServletRequest object
-     * @param response HttpServletResponse object
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException      if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        if (SessionUtil.isLoggedIn(request)) {
+            redirectBasedOnRole(request, response);
+            return;
+        }
         request.getRequestDispatcher("/WEB-INF/pages/login.jsp").forward(request, response);
     }
 
-    /**
-     * Handles POST requests for user login.
-     * Validates input using ValidationUtil before proceeding with authentication.
-     *
-     * @param request  HttpServletRequest object
-     * @param response HttpServletResponse object
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException      if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (SessionUtil.isLoggedIn(req)) {
+            redirectBasedOnRole(req, resp);
+            return;
+        }
+        
         String username = req.getParameter("username");
         String password = req.getParameter("password");
         
-        // Validate input fields using ValidationUtil
+        if (validateInput(req, resp, username, password)) {
+            return;
+        }
+        
+        PodcastUserModel podcastUser = new PodcastUserModel(username, password);
+        Boolean loginStatus = loginService.loginUser(podcastUser);
+        
+        if (loginStatus != null && loginStatus) {
+            handleSuccessfulLogin(req, resp, username);
+        } else {
+            handleLoginFailure(req, resp, loginStatus);
+        }
+        
+        System.out.println("Login attempt for username: " + username);
+    }
+
+    private boolean validateInput(HttpServletRequest req, HttpServletResponse resp, String username, String password) 
+            throws ServletException, IOException {
         boolean hasValidationErrors = false;
         
-        // Validate username
         if (ValidationUtil.isNullOrEmpty(username)) {
             req.setAttribute("usernameError", "Username cannot be empty");
             hasValidationErrors = true;
@@ -69,7 +69,6 @@ public class LoginController extends HttpServlet {
             hasValidationErrors = true;
         }
         
-        // Validate password
         if (ValidationUtil.isNullOrEmpty(password)) {
             req.setAttribute("passwordError", "Password cannot be empty");
             hasValidationErrors = true;
@@ -78,51 +77,44 @@ public class LoginController extends HttpServlet {
             hasValidationErrors = true;
         }
         
-        // If validation fails, return to login page with errors
         if (hasValidationErrors) {
-            req.setAttribute("username", username); // Keep username for convenience
+            req.setAttribute("username", username);
             req.getRequestDispatcher("/WEB-INF/pages/login.jsp").forward(req, resp);
-            return;
+            return true;
         }
+        return false;
+    }
+
+    private void handleSuccessfulLogin(HttpServletRequest req, HttpServletResponse resp, String username) 
+            throws IOException {
+        SessionUtil.setAttribute(req, "username", username);
+        SessionUtil.setAttribute(req, "isLoggedIn", true);
+        SessionUtil.setSessionTimeout(req, 1800);
         
-        // Proceed with authentication if validation passed
-        PodcastUserModel podcastUser = new PodcastUserModel(username, password);
-        Boolean loginStatus = loginService.loginUser(podcastUser);
-        
-        if (loginStatus != null && loginStatus) {
-            SessionUtil.setAttribute(req, "username", username);
-            if (username.equals("admin")) {
-                CookieUtil.addCookie(resp, "role", "admin", 5 * 30);
-                resp.sendRedirect(req.getContextPath() + "/admin/dashboard"); // Redirect to admin dashboard
-            } else {
-                CookieUtil.addCookie(resp, "role", "user", 5 * 30);
-                resp.sendRedirect(req.getContextPath() + "/discover"); // Redirect to podcast discovery page
-            }
+        if ("admin".equals(username)) {
+            CookieUtil.addCookie(resp, "role", "admin", 5 * 30);
         } else {
-            handleLoginFailure(req, resp, loginStatus);
+            CookieUtil.addCookie(resp, "role", "user", 5 * 30);
+        }
+        resp.sendRedirect(req.getContextPath() + "/"); // Redirect to home page
+    }
+
+    private void redirectBasedOnRole(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String username = SessionUtil.getCurrentUser(req);
+        if ("admin".equals(username)) {
+            resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
+        } else {
+            resp.sendRedirect(req.getContextPath() + "/"); // Redirect to home page
         }
     }
 
-    /**
-     * Handles login failures by setting attributes and forwarding to the login
-     * page.
-     *
-     * @param req         HttpServletRequest object
-     * @param resp        HttpServletResponse object
-     * @param loginStatus Boolean indicating the login status
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException      if an I/O error occurs
-     */
     private void handleLoginFailure(HttpServletRequest req, HttpServletResponse resp, Boolean loginStatus)
             throws ServletException, IOException {
-        String errorMessage;
-        if (loginStatus == null) {
-            errorMessage = "Our server is currently unavailable. Please try again later!";
-        } else {
-            errorMessage = "Invalid username or password. Please try again!";
-        }
+        String errorMessage = (loginStatus == null) 
+            ? "Our server is currently unavailable. Please try again later!"
+            : "Invalid username or password. Please try again!";
         req.setAttribute("error", errorMessage);
-        req.setAttribute("username", req.getParameter("username")); // Preserve the username
+        req.setAttribute("username", req.getParameter("username"));
         req.getRequestDispatcher("/WEB-INF/pages/login.jsp").forward(req, resp);
     }
 }

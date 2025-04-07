@@ -1,9 +1,6 @@
 package com.statpod.controller;
 
 import java.io.IOException;
-import java.time.LocalDate;
-
-import java.util.ArrayList;
 import java.util.List;
 import com.statpod.model.PodcastUserModel;
 import com.statpod.service.RegisterService;
@@ -51,16 +48,22 @@ public class RegisterController extends HttpServlet {
             }
 
             PodcastUserModel userModel = extractUserModel(req);
-            Boolean isAdded = registerService.addUser(userModel);
+            
+            // Handle image upload only if an image was provided
+            Part image = req.getPart("imageUrl");
+            if (image != null && image.getSize() > 0) {
+                if (!uploadImage(req)) {
+                    handleError(req, resp, "Could not upload the image. Please try again later!");
+                    return;
+                }
+            }
 
+            Boolean isAdded = registerService.addUser(userModel);
+            
             if (isAdded == null) {
                 handleError(req, resp, "Our server is under maintenance. Please try again later!");
             } else if (isAdded) {
-                if (uploadImage(req)) {
-                    handleSuccess(req, resp, "Your account is successfully created!", "/WEB-INF/pages/login.jsp");
-                } else {
-                    handleError(req, resp, "Could not upload the image. Please try again later!");
-                }
+                handleSuccess(req, resp, "Your account is successfully created!", "/WEB-INF/pages/login.jsp");
             } else {
                 handleError(req, resp, "Could not register your account. Please try again later!");
             }
@@ -70,7 +73,7 @@ public class RegisterController extends HttpServlet {
         }
     }
 
-    private String validateRegistrationForm(HttpServletRequest req) {
+    private String validateRegistrationForm(HttpServletRequest req) throws IOException, ServletException {
         String username = req.getParameter("username");
         String email = req.getParameter("email");
         String password = req.getParameter("password");
@@ -86,13 +89,10 @@ public class RegisterController extends HttpServlet {
         if (!ValidationUtil.isValidPassword(password)) return "Password must be at least 8 characters long, with 1 uppercase letter, 1 number, and 1 symbol.";
         if (!ValidationUtil.doPasswordsMatch(password, confirmPassword)) return "Passwords do not match.";
 
-        try {
-            Part image = req.getPart("imageUrl");
-            if (!ValidationUtil.isValidImageExtension(image)) {
-                return "Invalid image format. Only jpg, jpeg, png, and gif are allowed.";
-            }
-        } catch (IOException | ServletException e) {
-            return "Error handling image file. Please ensure the file is valid.";
+        // Only validate image if one was uploaded
+        Part image = req.getPart("imageUrl");
+        if (image != null && image.getSize() > 0 && !ValidationUtil.isValidImageExtension(image)) {
+            return "Invalid image format. Only jpg, jpeg, png, and gif are allowed.";
         }
 
         // Validate genre ID if provided
@@ -117,8 +117,11 @@ public class RegisterController extends HttpServlet {
         String favoriteGenreStr = req.getParameter("favoriteGenre");
         String password = PasswordUtil.encrypt(username, req.getParameter("password"));
         
+        String imageUrl = null;
         Part image = req.getPart("imageUrl");
-        String imageUrl = imageUtil.getImageNameFromPart(image);
+        if (image != null && image.getSize() > 0) {
+            imageUrl = imageUtil.getImageNameFromPart(image);
+        }
 
         // Convert favoriteGenre from String to Integer
         Integer favoriteGenre = null;
@@ -135,6 +138,9 @@ public class RegisterController extends HttpServlet {
 
     private boolean uploadImage(HttpServletRequest req) throws IOException, ServletException {
         Part image = req.getPart("imageUrl");
+        if (image == null || image.getSize() == 0) {
+            return true; // No image to upload is not an error
+        }
         return imageUtil.uploadImage(image, req.getServletContext().getRealPath("/"), "users");
     }
 

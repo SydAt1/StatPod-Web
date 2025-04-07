@@ -23,7 +23,7 @@ public class LoginService {
      *         connection error occurs
      */
     public Boolean loginUser(PodcastUserModel podcastUserModel) {
-        String query = "SELECT username, password FROM podcast_user WHERE username = ?";
+        String query = "SELECT username, password FROM users WHERE username = ?";
 
         try (Connection dbConn = DbConfig.getDbConnection();
              PreparedStatement stmt = dbConn.prepareStatement(query)) {
@@ -52,7 +52,8 @@ public class LoginService {
      */
     private boolean validatePassword(ResultSet result, PodcastUserModel podcastUserModel) throws SQLException {
         String dbPassword = result.getString("password");
-        return PasswordUtil.decrypt(dbPassword, podcastUserModel.getUsername())
-                .equals(podcastUserModel.getPassword());
+        String decryptedPassword = PasswordUtil.decrypt(dbPassword, podcastUserModel.getUsername());
+
+        return decryptedPassword != null && decryptedPassword.equals(podcastUserModel.getPassword());
     }
 }
